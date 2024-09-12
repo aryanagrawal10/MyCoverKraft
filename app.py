@@ -84,25 +84,25 @@ with tab1:
 
     res_text = ""
     if res_format == 'Upload':
-        res_file = st.file_uploader('📁 Upload your resume in PDF format', type='pdf')
+        res_file = st.file_uploader('📁 Upload your resume in PDF format', type='pdf', key="upload_resume")
         if res_file:
             res_text = extract_text_from_pdf(res_file)
     else:
-        res_text = st.text_area('Pasted resume elements')
+        res_text = st.text_area('Pasted resume elements', key="pasted_resume_elements")
 
     st.info("Your data privacy is important. Uploaded resumes are only used for generating the cover letter and are not stored or used for any other purposes.")
 
-    tone = st.selectbox('Select the Tone of Your Cover Letter', ['Professional', 'Friendly', 'Enthusiastic', 'Formal', 'Casual'])
-    achievements = st.text_area('Include Specific Achievements, Skills or Keywords')
-    letter_structure = st.radio('Choose Your Cover Letter Structure', ('Standard', 'Skill-based', 'Story-telling'))
+    tone = st.selectbox('Select the Tone of Your Cover Letter', ['Professional', 'Friendly', 'Enthusiastic', 'Formal', 'Casual'], key="tone_select")
+    achievements = st.text_area('Include Specific Achievements, Skills or Keywords', key="achievements_text")
+    letter_structure = st.radio('Choose Your Cover Letter Structure', ('Standard', 'Skill-based', 'Story-telling'), key="structure_radio")
 
     with st.form('input_form'):
-        job_desc = st.text_area('Job description*')
-        user_name = st.text_input('Name*')
-        company = st.text_input('Company name*')
-        manager = st.text_input('Hiring manager')
-        role = st.text_input('Job Role*')
-        referral = st.text_input('How did you find out about this opportunity?')
+        job_desc = st.text_area('Job description*', key="job_desc_text")
+        user_name = st.text_input('Name*', key="user_name_input")
+        company = st.text_input('Company name*', key="company_name_input")
+        manager = st.text_input('Hiring manager', key="manager_input")
+        role = st.text_input('Job Role*', key="job_role_input")
+        referral = st.text_input('How did you find out about this opportunity?', key="referral_input")
 
         submitted = st.form_submit_button("Generate Cover Letter")
 
@@ -191,8 +191,8 @@ with tab1:
             st.error("Please fill in all the required fields.")
 
     if st.session_state.cover_letter_generated and not st.session_state.feedback_submitted:
-        feedback = st.slider("Rate the quality of the generated cover letter (1-5)", 1, 5, 3)
-        if st.button("Submit Feedback"):
+        feedback = st.slider("Rate the quality of the generated cover letter (1-5)", 1, 5, 3, key="feedback_slider")
+        if st.button("Submit Feedback", key="submit_feedback_button"):
             save_feedback_to_file(user_name, feedback)
             st.success("Thank you for your feedback!")
             st.session_state.feedback_submitted = True
@@ -206,13 +206,13 @@ with tab2:
         - Edit the extracted text as needed.
     """)
 
-    resume_file = st.file_uploader('📁 Upload your resume in PDF format', type='pdf')
+    resume_file = st.file_uploader('📁 Upload your resume in PDF format', type='pdf', key="resume_file_uploader")
     if resume_file:
         resume_text = extract_text_from_pdf(resume_file)
-        st.text_area('Extracted Resume Text', value=resume_text, height=300, key="resume_text")
+        st.text_area('Extracted Resume Text', value=resume_text, height=300, key="extracted_resume_text")
 
-        edited_text = st.text_area('Edit Resume Text', value=resume_text, height=300, key="edit_text")
-        if st.button("Save Edited Resume"):
+        edited_text = st.text_area('Edit Resume Text', value=resume_text, height=300, key="edit_resume_text")
+        if st.button("Save Edited Resume", key="save_edited_resume_button"):
             st.session_state.edited_resume_text = edited_text
             st.success("Edited resume text saved successfully!")
 
@@ -228,20 +228,21 @@ with tab3:
     res_format_match = st.radio(
         "Resume Input Method",
         ('Upload', 'Paste'),
-        help="Choose how you'd like to input your resume."
+        help="Choose how you'd like to input your resume.",
+        key="resume_input_method"
     )
 
     resume_text_match = ""
     if res_format_match == 'Upload':
-        resume_file_match = st.file_uploader('📁 Upload your resume in PDF format', type='pdf', key="resume_file_match")
+        resume_file_match = st.file_uploader('📁 Upload your resume in PDF format', type='pdf', key="resume_file_uploader_match")
         if resume_file_match:
             resume_text_match = extract_text_from_pdf(resume_file_match)
     else:
-        resume_text_match = st.text_area('Pasted resume elements', key="pasted_resume")
+        resume_text_match = st.text_area('Pasted resume elements', key="pasted_resume_elements_match")
 
-    job_desc_text = st.text_area('Paste Job Description')
+    job_desc_text = st.text_area('Paste Job Description', key="job_desc_text_match")
 
-    if st.button("Match Keywords"):
+    if st.button("Match Keywords", key="match_keywords_button"):
         if resume_text_match and job_desc_text:
             resume_keywords = extract_keywords(resume_text_match)
             job_desc_keywords = extract_keywords(job_desc_text)
