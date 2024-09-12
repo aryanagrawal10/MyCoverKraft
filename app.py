@@ -5,8 +5,8 @@ from fpdf import FPDF
 from docx import Document
 import openai
 
-# Set your OpenAI API key here
-openai.api_key = 'YOUR_API_KEY'
+# Set OpenAI API key
+ai.api_key = st.secrets["openai_key"]
 
 # Function Definitions
 def extract_text_from_pdf(pdf_file):
