@@ -3,19 +3,58 @@ from datetime import date
 from io import BytesIO
 from fpdf import FPDF
 from docx import Document
+import openai
 
-# Placeholder function definitions
+# Set your OpenAI API key here
+openai.api_key = 'YOUR_API_KEY'
+
+# Function Definitions
 def extract_text_from_pdf(pdf_file):
+    # Placeholder function to simulate PDF text extraction
     return "Extracted text from the uploaded PDF file."
 
-def ai_chat_completion(*args, **kwargs):
-    return {
-        'choices': [
-            {'message': {'content': "Generated cover letter based on provided inputs."}}
-        ]
-    }
+def ai_chat_completion(res_text, job_desc, user_name, company, role, manager, referral, tone, achievements, letter_structure):
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "user", "content": "You will need to generate a cover letter based on specific resume and a job description"},
+            {"role": "user", "content": f"My resume text: {res_text}"},
+            {"role": "user", "content": f"The job description is: {job_desc}"},
+            {"role": "user", "content": f"The candidate's name to include on the cover letter: {user_name}"},
+            {"role": "user", "content": f"The job title/role : {role}"},
+            {"role": "user", "content": f"The hiring manager is: {manager}"},
+            {"role": "user", "content": f"How you heard about the opportunity: {referral}"},
+            {"role": "user", "content": f"The company to which you are generating the cover letter for: {company}"},
+            {"role": "user", "content": f"Tone: {tone.lower()}"},
+            {"role": "user", "content": f"Achievements/Skills: {achievements}"},
+            {"role": "user", "content": f"Structure: {letter_structure.lower()}"},
+            {"role": "user", "content": "The cover letter should have three content paragraphs. Please replace all placeholders with the specific details provided."},
+            {"role": "user", "content": "Generate a specific cover letter based on the above. Generate the response and include appropriate spacing between the paragraph text."}
+        ],
+        temperature=0.99
+    )
+    return response
+
+def create_file(data, file_type):
+    if file_type == 'txt':
+        return data.encode('utf-8')
+    elif file_type == 'docx':
+        doc = Document()
+        doc.add_paragraph(data)
+        buffer = BytesIO()
+        doc.save(buffer)
+        return buffer.getvalue()
+    elif file_type == 'pdf':
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font("Arial", size=12)
+        pdf.multi_cell(0, 10, data)
+        buffer = BytesIO()
+        buffer.write(pdf.output(dest='S').encode('latin-1'))
+        return buffer.getvalue()
 
 def save_feedback_to_file(user_name, feedback):
+    # Placeholder function to simulate saving feedback
     pass
 
 def match_keywords(resume_text, job_description):
@@ -74,27 +113,17 @@ with tab1:
     if submitted:
         if res_text and job_desc and user_name and company and role:
             try:
-                customization_prompt = f"""
-                Tone: {tone.lower()}
-                Achievements/Skills: {achievements}
-                Structure: {letter_structure.lower()}
-                """
                 completion = ai_chat_completion(
-                    model="gpt-3.5-turbo",
-                    temperature=0.99,
-                    messages=[
-                        {"role": "user", "content": "You will need to generate a cover letter based on specific resume and a job description"},
-                        {"role": "user", "content": f"My resume text: {res_text}"},
-                        {"role": "user", "content": f"The job description is: {job_desc}"},
-                        {"role": "user", "content": f"The candidate's name to include on the cover letter: {user_name}"},
-                        {"role": "user", "content": f"The job title/role : {role}"},
-                        {"role": "user", "content": f"The hiring manager is: {manager}"},
-                        {"role": "user", "content": f"How you heard about the opportunity: {referral}"},
-                        {"role": "user", "content": f"The company to which you are generating the cover letter for: {company}"},
-                        {"role": "user", "content": customization_prompt},
-                        {"role": "user", "content": "The cover letter should have three content paragraphs. Please replace all placeholders with the specific details provided."},
-                        {"role": "user", "content": "Generate a specific cover letter based on the above. Generate the response and include appropriate spacing between the paragraph text."}
-                    ]
+                    res_text=res_text,
+                    job_desc=job_desc,
+                    user_name=user_name,
+                    company=company,
+                    role=role,
+                    manager=manager,
+                    referral=referral,
+                    tone=tone,
+                    achievements=achievements,
+                    letter_structure=letter_structure
                 )
 
                 response_out = completion['choices'][0]['message']['content']
@@ -118,26 +147,6 @@ with tab1:
                 response_out = response_out.replace('[How did you find out about this opportunity?]', referral)
 
                 st.write(response_out)
-                
-                # Save the generated cover letter in different formats
-                def create_file(data, file_type):
-                    if file_type == 'txt':
-                        return data.encode('utf-8')
-                    elif file_type == 'docx':
-                        doc = Document()
-                        doc.add_paragraph(data)
-                        buffer = BytesIO()
-                        doc.save(buffer)
-                        return buffer.getvalue()
-                    elif file_type == 'pdf':
-                        pdf = FPDF()
-                        pdf.add_page()
-                        pdf.set_font("Arial", size=12)
-                        pdf.multi_cell(0, 10, data)
-                        buffer = BytesIO()
-                        pdf.output(dest='S').encode('latin-1')
-                        buffer.write(pdf.output(dest='S').encode('latin-1'))
-                        return buffer.getvalue()
                 
                 col1, col2, col3 = st.columns(3)
 
@@ -175,36 +184,27 @@ with tab2:
         resume_text = extract_text_from_pdf(resume_file)
         st.text_area('Extracted Resume Text', value=resume_text, height=300, key="resume_text_area")
 
-        edited_text = st.text_area('Edit Resume Text', value=resume_text, height=300, key="edit_resume_text_area")
-        if st.button("Save Edited Resume", key="save_edited_resume"):
-            st.session_state.edited_resume_text = edited_text
-            st.success("Edited resume text saved successfully!")
+        edited_text = st.text_area('Edit Resume Text', value=resume_text, height=300, key="edited_text_area")
+
+        if st.button('Save Edited Resume'):
+            st.success('Edited resume saved successfully!')
+            # Implement saving logic here
 
 # Resume and Job Description Keyword Matcher Tab
 with tab3:
     st.markdown("## Resume and Job Description Keyword Matcher")
     st.expander("Instructions").write("""
-        - Upload your resume or paste it.
-        - Paste a job description.
-        - The app will highlight matching keywords between your resume and the job description.
+        - Upload your resume in PDF format.
+        - Paste or upload a job description.
+        - Compare keywords to see how well your resume matches the job description.
     """)
 
-    resume_input_method = st.radio(
-        "Resume Input Method",
-        ('Upload', 'Paste'),
-        help="Choose how you'd like to input your resume.",
-        key="resume_input_method_matcher"
-    )
+    resume_file_match = st.file_uploader('📁 Upload your resume in PDF format', type='pdf', key="resume_file_match")
+    job_desc_match = st.text_area('Job Description', key="job_desc_match_textarea")
 
-    resume_text_matcher = ""
-    if resume_input_method == 'Upload':
-        resume_file_matcher = st.file_uploader('📁 Upload your resume in PDF format', type='pdf', key="resume_file_matcher")
-        if resume_file_matcher:
-            resume_text_matcher = extract_text_from_pdf(resume_file_matcher)
-    else:
-        resume_text_matcher = st.text_area('Pasted resume elements', key="resume_paste_text_area")
-
-    job_description_matcher = st.text_area('Job description', key="job_description_matcher_textarea")
-    if st.button("Match Keywords", key="match_keywords_button"):
-        matched_keywords = match_keywords(resume_text_matcher, job_description_matcher)
+    if resume_file_match and job_desc_match:
+        resume_text_match = extract_text_from_pdf(resume_file_match)
+        matched_keywords = match_keywords(resume_text_match, job_desc_match)
         st.write(f"Matched Keywords: {matched_keywords}")
+
+        st.text_area('Resume Text for Matching', value=resume_text_match, height=300, key="resume_text_match_area")
