@@ -115,7 +115,7 @@ with tab1:
                 Structure: {letter_structure.lower()}
                 """
                 completion = ai.ChatCompletion.create(
-                    model="gpt-3.5-turbo",
+                    model="gpt-4",
                     temperature=0.99,
                     messages=[
                         {"role": "user", "content": "You will need to generate a cover letter based on specific resume and a job description"},
